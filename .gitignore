@@ -1,0 +1,10 @@
+# will have compiled files and executables
+/target/
+
+.DS_Store
+
+# IDEs
+*.iml
+.idea
+
+artifacts
