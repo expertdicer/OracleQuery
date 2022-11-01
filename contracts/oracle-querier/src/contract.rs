@@ -1,17 +1,19 @@
-use std::{vec, ops::Deref};
+use std::{ops::Deref, vec};
 
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError,
-    StdResult, Storage, Uint128, QueryRequest, QuerierWrapper, Decimal,
+    coin, to_binary, Addr, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo,
+    QuerierWrapper, QueryRequest, Response, StdError, StdResult, Storage, Uint128,
 };
 
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::querier::UltraQuerier;
-use juno_stable::oracle_querier::{ExecuteMsg, InstantiateMsg, QueryMsg, ExchangeRateResponse, UltraQuery, OracleQuery};
+use juno_stable::oracle_querier::{
+    ExchangeRateResponse, ExecuteMsg, InstantiateMsg, OracleQuery, QueryMsg, UltraQuery,
+};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:active-pool";
@@ -41,7 +43,6 @@ pub fn execute(
     Ok(Response::default())
 }
 
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
@@ -50,12 +51,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 pub fn query_exchange_rate(deps: Deps, denom: String) -> StdResult<Decimal> {
-    let query = UltraQuery::Oracle(OracleQuery::ExchangeRate {
+    let query: UltraQuery = UltraQuery::Oracle(OracleQuery::ExchangeRate {
         denom: denom.into(),
     });
     let request: QueryRequest<UltraQuery> = UltraQuery::into(query);
-    let querier = QuerierWrapper::<UltraQuery>::new(deps.querier.deref());
+    let querier: QuerierWrapper<UltraQuery> =
+        QuerierWrapper::<UltraQuery>::new(deps.querier.deref());
     let exchangerate: ExchangeRateResponse = querier.query(&request)?;
     Ok(exchangerate.rate)
-    
 }
