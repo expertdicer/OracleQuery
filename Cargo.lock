@@ -450,6 +450,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw2",
+ "juno-stable",
  "schemars",
  "serde",
  "thiserror",
