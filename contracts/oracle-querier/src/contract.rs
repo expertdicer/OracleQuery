@@ -3,14 +3,14 @@ use std::{ops::Deref, vec};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    coin, to_binary, Addr, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo,
+    attr, coin, to_binary, Addr, BankMsg, Binary, Decimal, Deps, DepsMut, Env, MessageInfo,
     QuerierWrapper, QueryRequest, Response, StdError, StdResult, Storage, Uint128,
 };
 
 use cw2::set_contract_version;
 
-use crate::error::ContractError;
 use crate::querier::UltraQuerier;
+use crate::{error::ContractError, state::Rate};
 use juno_stable::oracle_querier::{
     ExchangeRateResponse, ExecuteMsg, InstantiateMsg, OracleQuery, QueryMsg, UltraQuery,
 };
@@ -29,18 +29,35 @@ pub fn instantiate(
     _msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
     Ok(Response::default())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _msg: ExecuteMsg,
+    msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    Ok(Response::default())
+    match msg {
+        ExecuteMsg::GetExchangeRate { denom } => get_exchange_rate(deps, denom),
+    }
+}
+
+pub fn get_exchange_rate(deps: DepsMut, denom: String) -> Result<Response, ContractError> {
+    let query: UltraQuery = UltraQuery::Oracle(OracleQuery::ExchangeRate {
+        denom: denom.clone(),
+    });
+    let request: QueryRequest<UltraQuery> = UltraQuery::into(query);
+    let querier: QuerierWrapper<UltraQuery> =
+        QuerierWrapper::<UltraQuery>::new(deps.querier.deref());
+    let exchangerate: ExchangeRateResponse = querier.query(&request)?;
+    Rate.save(deps.storage, denom.clone(), &exchangerate.rate)?;
+    Ok(Response::new().add_attributes(vec![
+        attr("action", "get_rate"),
+        attr("denom", denom),
+        attr("rate", exchangerate.rate.to_string()),
+    ]))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -51,12 +68,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 pub fn query_exchange_rate(deps: Deps, denom: String) -> StdResult<Decimal> {
-    let query: UltraQuery = UltraQuery::Oracle(OracleQuery::ExchangeRate {
-        denom: denom.into(),
-    });
-    let request: QueryRequest<UltraQuery> = UltraQuery::into(query);
-    let querier: QuerierWrapper<UltraQuery> =
-        QuerierWrapper::<UltraQuery>::new(deps.querier.deref());
-    let exchangerate: ExchangeRateResponse = querier.query(&request)?;
-    Ok(exchangerate.rate)
+    let rate = Rate.load(deps.storage, denom)?;
+    Ok(rate)
 }
