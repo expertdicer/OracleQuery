@@ -40,7 +40,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::GetExchangeRate { denom } => get_exchange_rate(deps, denom),
+        ExecuteMsg::SetExchangeRate { denom } => get_exchange_rate(deps, denom),
     }
 }
 
