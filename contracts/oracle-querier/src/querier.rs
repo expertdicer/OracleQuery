@@ -2,7 +2,7 @@
 
 use cosmwasm_std::{QuerierWrapper, QueryRequest, StdResult};
 
-use juno_stable::oracle_querier::{ExchangeRateResponse, UltraQuery, OracleQuery};
+use juno_querier::oracle_querier::{ExchangeRateResponse, UltraQuery, OracleQuery};
 
 /// This is a helper wrapper to easily use our custom queries
 pub struct UltraQuerier<'a> {

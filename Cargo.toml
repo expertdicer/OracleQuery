@@ -1,7 +1,7 @@
 [workspace]
 members = ["packages/*","contracts/*"]
 
-[profile.release.package.oracle-querier]
+[profile.release.package.juno-oracle-querier]
 opt-level = 3
 debug = false
 debug-assertions = false

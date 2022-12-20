@@ -1,9 +1,10 @@
 [package]
-name = "juno-stable"
+name = "juno-querier"
 version = "0.1.0"
 authors = ["Ho Ba Nguyen <expertdicer@gmail.com>"]
 edition = "2021"
 description = "Commom types and queriers"
+license = "MIT"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

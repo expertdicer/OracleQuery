@@ -11,7 +11,7 @@ use cw2::set_contract_version;
 
 use crate::querier::UltraQuerier;
 use crate::{error::ContractError, state::Rate};
-use juno_stable::oracle_querier::{
+use juno_querier::oracle_querier::{
     ExchangeRateResponse, ExecuteMsg, InstantiateMsg, OracleQuery, QueryBalanceRequest, QueryMsg,
     UltraQuery,
 };
