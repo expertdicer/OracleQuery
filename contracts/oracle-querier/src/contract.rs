@@ -12,7 +12,8 @@ use cw2::set_contract_version;
 use crate::querier::UltraQuerier;
 use crate::{error::ContractError, state::Rate};
 use juno_stable::oracle_querier::{
-    ExchangeRateResponse, ExecuteMsg, InstantiateMsg, OracleQuery, QueryMsg, UltraQuery,
+    ExchangeRateResponse, ExecuteMsg, InstantiateMsg, OracleQuery, QueryBalanceRequest, QueryMsg,
+    UltraQuery,
 };
 
 // version info for migration info
@@ -64,10 +65,32 @@ pub fn get_exchange_rate(deps: DepsMut, denom: String) -> Result<Response, Contr
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::ExchangeRate { denom } => to_binary(&query_exchange_rate(deps, denom)?),
+        QueryMsg::ExchangeRateStarGate { address, denom } => {
+            to_binary(&query_exchange_rate_stargate(deps, address, denom)?)
+        }
     }
 }
 
 pub fn query_exchange_rate(deps: Deps, denom: String) -> StdResult<Decimal> {
     let rate = Rate.load(deps.storage, denom)?;
+    Ok(rate)
+}
+
+pub fn query_exchange_rate_stargate(
+    deps: Deps,
+    address: String,
+    denom: String,
+) -> StdResult<Decimal> {
+    deps.api.addr_validate(&address)?;
+    let query_request = QueryBalanceRequest {
+        address: address,
+        denom: denom,
+    };
+    let data = to_binary(&query_request)?;
+    let request = QueryRequest::Stargate {
+        path: "/juno.oracle.v1.Query/ExchangeRates".to_string(),
+        data: data,
+    };
+    let rate: Decimal = deps.querier.query(&request)?;
     Ok(rate)
 }
