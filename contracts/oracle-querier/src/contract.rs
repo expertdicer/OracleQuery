@@ -86,11 +86,11 @@ pub fn query_exchange_rate_stargate(
         address: address,
         denom: denom,
     };
-    let data = to_binary(&query_request)?;
+    let data: Binary = to_binary(&query_request)?;
     let request = QueryRequest::Stargate {
         path: "/juno.oracle.v1.Query/ExchangeRates".to_string(),
         data: data,
     };
-    let rate: Decimal = deps.querier.query(&request)?;
-    Ok(rate)
+    let exchange_rate_res: ExchangeRateResponse = deps.querier.query(&request)?;
+    Ok(exchange_rate_res.rate)
 }
