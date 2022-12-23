@@ -1,5 +1,6 @@
 use cosmwasm_std::{ StdError};
 use thiserror::Error;
+use cosmos_sdk_proto::prost::{DecodeError, EncodeError};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
@@ -23,4 +24,7 @@ pub enum ContractError {
 
     #[error("NotLatestData")]
     NotLatestData {},
+
+    #[error("{0}")]
+    Decode(#[from] DecodeError),
 }
