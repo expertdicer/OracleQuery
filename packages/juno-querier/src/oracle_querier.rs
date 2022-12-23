@@ -17,6 +17,8 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     ExchangeRate { denom: String },
     ExchangeRateStarGate { address: String, denom: String },
+    BalanceStargate { address: String, denom: String},
+    InflationStargate {}
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
