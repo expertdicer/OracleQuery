@@ -1,7 +1,6 @@
 use std::{ ops::Deref, vec};
 use prost::bytes::Buf;
 use cosmos_sdk_proto::cosmos::base::v1beta1::Coin;
-use cosmos_sdk_proto::traits::Message;
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
@@ -16,11 +15,8 @@ use juno_querier::oracle_querier::{
     UltraQuery,
 };
 use std::io::Cursor;
-use cosmos_sdk_proto::cosmos::bank::v1beta1::{
-    QueryBalanceRequest as StargateQueryBalanceRequest,
-    QueryBalanceResponse as StargateQueryBalanceResponse,
-};
-use cosmos_sdk_proto::cosmos::mint::v1beta1::{QueryInflationRequest, QueryInflationResponse};
+use cosmos_sdk_proto::ibc::core::channel::v1::{QueryNextSequenceSendRequest, QueryNextSequenceSendResponse};
+// use ibc_proto::ibc::core::channel::v1::{QueryNextSequenceSendResponse, QueryNextSequenceSendRequest};
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:active-pool";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -68,14 +64,7 @@ pub fn get_exchange_rate(deps: DepsMut, denom: String) -> Result<Response, Contr
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::ExchangeRate { denom } => to_binary(&query_exchange_rate(deps, denom)?),
-        QueryMsg::ExchangeRateStarGate { address, denom } => {
-            to_binary(&query_exchange_rate_stargate(deps, address, denom)?)
-        }
-        QueryMsg::BalanceStargate { address, denom } => {
-            to_binary(&query_total_balance_stargate(deps, address, denom)?)
-        }
-        QueryMsg::InflationStargate {} => to_binary(&query_inflation_stargate(deps)?),
+        QueryMsg::NextSequenceSend { port_id, channel_id } =>  to_binary(&query_next_sequence_send(deps, port_id, channel_id)?),
     }
 }
 
@@ -103,43 +92,21 @@ pub fn query_exchange_rate_stargate(
     Ok(exchange_rate_res.rate)
 }
 
-pub fn query_total_balance_stargate(deps: Deps, address: String, denom: String) -> StdResult<String> {
-    let bin = StargateQueryBalanceRequest {
-        address: address,
-        denom: denom,
-    }
-    .encode_to_vec();
 
-    let data = Binary::from(bin);
 
-    let query: QueryRequest<Empty> = QueryRequest::Stargate {
-        path: "/juno.bank.v1beta1.Query/Balance".to_string(),
-        data,
+pub fn query_next_sequence_send(deps: Deps, port_id: String, channel_id: String) -> StdResult<Binary> {
+    let bin = QueryNextSequenceSendRequest {
+        port_id,
+        channel_id,
     };
 
-    let bin_res: Binary = deps.querier.query(&query)?;
-    let res = StargateQueryBalanceResponse::decode(&*bin_res.to_vec())
-        .map_err(ContractError::Decode)
-        .unwrap();
-
-    let coin = res.balance.unwrap();
-    Ok(coin.amount)
-}
-
-pub fn query_inflation_stargate(deps: Deps) -> StdResult<Binary> {
-    let bin = QueryInflationRequest {}.encode_to_vec();
-
-    let data = Binary::from(bin);
-
+    let req: Binary = to_binary(&bin)?;
     let query: QueryRequest<Empty> = QueryRequest::Stargate {
-        path: "/juno.mint.Query/Inflation".to_string(),
-        data,
+        path: "/ibc.core.channel.v1.Query/NextSequenceSend".to_string(),
+        data: req,
     };
     let bin_res: Binary = deps.querier.query(&query)?;
-    let res = QueryInflationResponse::decode(&*bin_res.to_vec())
-        .map_err(ContractError::Decode)
-        .unwrap();
-    let inflation = to_binary(&res.inflation)?;
+    let res = to_binary(&bin_res)?;
     
-    Ok(inflation)
+    Ok(res)
 }

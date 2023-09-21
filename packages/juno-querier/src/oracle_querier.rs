@@ -15,10 +15,10 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    ExchangeRate { denom: String },
-    ExchangeRateStarGate { address: String, denom: String },
-    BalanceStargate { address: String, denom: String},
-    InflationStargate {}
+    NextSequenceSend {
+        port_id: String,
+        channel_id: String,
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
